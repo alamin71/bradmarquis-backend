@@ -1,75 +1,182 @@
 export const welcome = () => {
   const date = new Date(Date.now());
   const hours = date.getHours();
+  const projectName = process.env.PROJECT_NAME || "BradMarquis Backend";
   let greeting = "";
 
   // Time-based greeting
   if (hours < 12) {
-    greeting = "Good morning! 🌞 Let’s get the day started!";
+    greeting = "Good morning. The system is ready.";
   } else if (hours < 18) {
-    greeting = "Good afternoon! 🌤️ Keep the momentum going!";
+    greeting = "Good afternoon. Everything is running smoothly.";
   } else {
-    greeting = "Good evening! 🌙 Hope you had a fantastic day!";
+    greeting = "Good evening. Services are online.";
   }
 
   return `
-      <div style="text-align:center; font-family: 'Verdana', sans-serif; color:#4CAF50; padding: 50px 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); max-width: 100%; margin: 0 auto; animation: fadeIn 2s;">
-        <h1 style="font-size: 48px; color: #FF6347; animation: scaleUp 1s ease-in-out;">Beep-beep! The server is alive and kicking 🚀</h1>
-        <p style="font-size: 24px; color: #2F4F4F; animation: slideIn 1.5s ease-in-out;">${greeting}</p>
-        <p style="font-size: 20px; color: #3B3B3B;">The current date and time is: <strong style="color: #FF6347;">${date}</strong></p>
-        <p style="font-size: 18px; color: #555;">This server is a highly caffeinated web machine ready to serve your requests with super speed!</p>
-        <p style="font-size: 22px; color: #2E8B57;">We're up and running with style! 😎</p>
-        <p><em style="font-size: 16px;">If you're seeing this message, congratulations – you're looking at a live server! 🎉</em></p>
-        <p style="font-size: 16px; color: #888;">Don’t forget to stay awesome! 🌟</p>
-  
-        <div style="margin-top: 20px; animation: fadeIn 2s;">
-          <h3 style="font-size: 24px; color: #32CD32;">Just a few things:</h3>
-          <ul style="font-size: 18px; list-style-type: none; padding: 0; color: #4682B4;">
-            <li>✅ Server is alive</li>
-            <li>✅ Date & time are correct</li>
-            <li>✅ Feeling awesome!</li>
-          </ul>
-        </div>
-        <div style="margin-top: 40px; animation: fadeIn 3s;">
-          <p style="font-size: 18px; color: #8B0000;">Wait... you’re still here? 🤔 Well, go ahead and try some cool routes! 😄</p>
-        </div>
-        <div style="margin-top: 40px; animation: fadeIn 4s;">
-          <h2 style="font-size: 28px; color: #FFD700;">Let’s create some magic together! ✨</h2>
-        </div>
-  
-        <div style="margin-top: 20px; animation: fadeIn 5s;">
-          <h3 style="font-size: 24px; color: #FF1493;">🧑‍💻 Developer Tip:</h3>
-          <p style="font-size: 18px; color: #800080;">Every time you refresh this page, the server gets a little more powerful! 💪🔥</p>
-        </div>
-      </div>
-  
+      <main class="status-shell">
+        <section class="status-card">
+          <p class="eyebrow">PROJECT STATUS</p>
+          <h1>${projectName}</h1>
+          <p class="subtitle">${greeting}</p>
+
+          <div class="pill-row">
+            <span class="pill">API: ONLINE</span>
+            <span class="pill">ENV: PRODUCTION</span>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <p class="label">Server Time</p>
+              <p class="value">${date.toUTCString()}</p>
+            </div>
+            <div class="meta-item">
+              <p class="label">Base Route</p>
+              <p class="value">/api/v1</p>
+            </div>
+          </div>
+
+          <p class="hint">If this page loads, deployment is successful and the backend is reachable.</p>
+        </section>
+      </main>
+
       <style>
-        @keyframes fadeIn {
+        :root {
+          --bg-1: #0b1f3a;
+          --bg-2: #12355b;
+          --card: #ffffff;
+          --text: #0f172a;
+          --muted: #475569;
+          --accent: #0ea5e9;
+          --accent-2: #22c55e;
+          --border: #dbe3ef;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          background: radial-gradient(circle at 15% 20%, #1d4ed8 0%, transparent 45%),
+            radial-gradient(circle at 85% 0%, #0ea5e9 0%, transparent 38%),
+            linear-gradient(140deg, var(--bg-1), var(--bg-2));
+          color: var(--text);
+          min-height: 100vh;
+        }
+
+        .status-shell {
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          padding: 24px;
+        }
+
+        .status-card {
+          width: min(820px, 100%);
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          padding: 28px;
+          box-shadow: 0 20px 60px rgba(15, 23, 42, 0.22);
+          animation: riseIn 460ms ease-out;
+        }
+
+        .eyebrow {
+          margin: 0 0 10px;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          font-weight: 700;
+          color: var(--accent);
+        }
+
+        h1 {
+          margin: 0;
+          font-size: clamp(28px, 5vw, 44px);
+          line-height: 1.1;
+        }
+
+        .subtitle {
+          margin: 12px 0 18px;
+          color: var(--muted);
+          font-size: clamp(15px, 2.4vw, 20px);
+        }
+
+        .pill-row {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-bottom: 18px;
+        }
+
+        .pill {
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          border: 1px solid #bae6fd;
+          background: #f0f9ff;
+          color: #0369a1;
+          padding: 7px 10px;
+          border-radius: 999px;
+        }
+
+        .meta-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .meta-item {
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 12px;
+          background: #fafcff;
+        }
+
+        .label {
+          margin: 0 0 6px;
+          color: var(--muted);
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .value {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          word-break: break-word;
+        }
+
+        .hint {
+          margin: 16px 0 0;
+          color: #166534;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 14px;
+        }
+
+        @keyframes riseIn {
           from {
             opacity: 0;
+            transform: translateY(12px);
           }
           to {
             opacity: 1;
+            transform: translateY(0);
           }
         }
-  
-        @keyframes scaleUp {
-          from {
-            transform: scale(0.8);
+
+        @media (max-width: 640px) {
+          .status-card {
+            padding: 20px;
           }
-          to {
-            transform: scale(1);
-          }
-        }
-  
-        @keyframes slideIn {
-          from {
-            transform: translateX(-50px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
+
+          .meta-grid {
+            grid-template-columns: 1fr;
           }
         }
       </style>
