@@ -3,13 +3,22 @@ import { z } from 'zod';
 const otpBodySchema = z.object({
   otp: z.preprocess(
     (val) => Number(val),
-    z.number().int().nonnegative({ message: 'OTP is required' })
+    z
+      .number()
+      .int()
+      .min(100000, { message: 'OTP must be a 6-digit number' })
+      .max(999999, { message: 'OTP must be a 6-digit number' })
   ),
 });
 
 const createSignupZodSchema = z.object({
   body: z.object({
-    name: z.string().nonempty({ message: 'Name is required' }),
+    firstName: z.string().nonempty({ message: 'First name is required' }),
+    lastName: z.string().nonempty({ message: 'Last name is required' }),
+    userName: z
+      .string()
+      .min(3, { message: 'Username must be at least 3 characters' })
+      .nonempty({ message: 'Username is required' }),
     email: z.string().email({ message: 'Invalid email address' }),
     password: z
       .string()
@@ -18,10 +27,23 @@ const createSignupZodSchema = z.object({
 });
 
 const createLoginZodSchema = z.object({
-  body: z.object({
-    email: z.string().nonempty({ message: 'Email is required' }),
-    password: z.string().nonempty({ message: 'Password is required' }),
-  }),
+  body: z
+    .object({
+      email: z.string().optional(),
+      userName: z.string().optional(),
+      emailOrUsername: z.string().optional(),
+      password: z.string().nonempty({ message: 'Password is required' }),
+    })
+    .refine(
+      (data) =>
+        Boolean(data.email?.trim()) ||
+        Boolean(data.userName?.trim()) ||
+        Boolean(data.emailOrUsername?.trim()),
+      {
+        message: 'Email or username is required',
+        path: ['emailOrUsername'],
+      }
+    ),
 });
 
 const createForgetPasswordZodSchema = z.object({

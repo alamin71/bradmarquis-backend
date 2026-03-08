@@ -8,9 +8,13 @@ import { USER_ROLES } from '../../../enums/user';
 import {
   IAuthResetPassword,
   IChangePassword,
-  ILoginData,
   IVerifyEmail,
 } from '../../../types/auth';
+
+type IAdminLoginData = {
+  email: string;
+  password: string;
+};
 
 const ensureAdminUserByEmail = async (email: string) => {
   const user = await User.findOne({ email });
@@ -90,7 +94,7 @@ const updateAdminProfileInDB = async (
   return updatedAdmin;
 };
 
-const adminLoginToDB = async (payload: ILoginData) => {
+const adminLoginToDB = async (payload: IAdminLoginData) => {
   await ensureAdminUserByEmail(payload.email);
 
   const tokens = await AuthService.loginUserFromDB(payload);

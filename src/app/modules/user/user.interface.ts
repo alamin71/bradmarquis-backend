@@ -2,6 +2,9 @@ import { Model } from 'mongoose';
 import { USER_ROLES } from '../../../enums/user';
 export type IUser = {
   name: string;
+  firstName?: string;
+  lastName?: string;
+  userName?: string;
   role: USER_ROLES;
   email: string;
   password: string;

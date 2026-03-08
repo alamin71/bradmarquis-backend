@@ -12,6 +12,23 @@ const userSchema = new Schema<IUser, UserModel>(
       type: String,
       required: true,
     },
+    firstName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    userName: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+    },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
@@ -97,6 +114,19 @@ userSchema.pre('save', async function (next) {
   const isExist = await User.findOne({ email: this.get('email') });
   if (isExist) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Email already exists!');
+  }
+
+  const rawUserName = this.get('userName') as string | undefined;
+  if (rawUserName) {
+    const normalizedUserName = rawUserName.toLowerCase().trim();
+    this.set('userName', normalizedUserName);
+
+    const existingByUserName = await User.findOne({
+      userName: normalizedUserName,
+    });
+    if (existingByUserName) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Username already exists!');
+    }
   }
 
   this.password = await bcrypt.hash(

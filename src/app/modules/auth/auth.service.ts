@@ -21,11 +21,22 @@ import { createToken } from '../../../utils/createToken';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
-  const { email, password } = payload;
+  const { email, userName, emailOrUsername, password } = payload;
+  const identifier = (emailOrUsername || email || userName || '').trim();
+
+  if (!identifier) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Email or username is required');
+  }
+
   if (!password) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required!');
   }
-  const isExistUser = await User.findOne({ email }).select('+password');
+
+  const normalizedIdentifier = identifier.toLowerCase();
+  const isExistUser = await User.findOne({
+    $or: [{ email: normalizedIdentifier }, { userName: normalizedIdentifier }],
+  }).select('+password');
+
   if (!isExistUser) {
     throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -42,7 +53,10 @@ const loginUserFromDB = async (payload: ILoginData) => {
       oneTimeCode: otp,
       expireAt: new Date(Date.now() + 3 * 60000),
     };
-    await User.findOneAndUpdate({ email }, { $set: { authentication } });
+    await User.findOneAndUpdate(
+      { email: isExistUser.email },
+      { $set: { authentication } }
+    );
 
     throw new AppError(
       StatusCodes.CONFLICT,
@@ -86,13 +100,23 @@ const loginUserFromDB = async (payload: ILoginData) => {
 
 // signup
 const signupUserToDB = async (payload: {
-  name: string;
+  firstName: string;
+  lastName: string;
+  userName: string;
   email: string;
   password: string;
 }) => {
-  const { name, email, password } = payload;
+  const { firstName, lastName, userName, email, password } = payload;
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedUserName = userName.trim().toLowerCase();
+  const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
-  const existing = await User.findOne({ email });
+  const existingByUserName = await User.findOne({ userName: normalizedUserName });
+  if (existingByUserName && existingByUserName.email !== normalizedEmail) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Username already exists.');
+  }
+
+  const existing = await User.findOne({ email: normalizedEmail });
   if (existing && existing.verified) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
@@ -102,7 +126,7 @@ const signupUserToDB = async (payload: {
 
   // If user exists but not verified, resend OTP automatically
   if (existing && !existing.verified) {
-    const otp = generateOTP(4);
+    const otp = generateOTP(6);
     const values = { name: existing.name, otp, email } as {
       name: string;
       otp: string;
@@ -115,11 +139,22 @@ const signupUserToDB = async (payload: {
       oneTimeCode: otp,
       expireAt: new Date(Date.now() + 5 * 60000),
     };
-    await User.findOneAndUpdate({ email }, { $set: { authentication } });
+    await User.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        $set: {
+          name: fullName,
+          firstName,
+          lastName,
+          userName: normalizedUserName,
+          authentication,
+        },
+      }
+    );
 
     // Create signup token for resend OTP
     const signupToken = jwtHelper.createToken(
-      { email },
+      { email: normalizedEmail },
       config.jwt.jwt_secret as Secret,
       '10m'
     );
@@ -127,10 +162,17 @@ const signupUserToDB = async (payload: {
     return { otp, signupToken };
   }
 
-  await User.create({ name, email, password });
+  await User.create({
+    name: fullName,
+    firstName,
+    lastName,
+    userName: normalizedUserName,
+    email: normalizedEmail,
+    password,
+  });
 
-  const otp = generateOTP(4);
-  const values = { name, otp, email } as {
+  const otp = generateOTP(6);
+  const values = { name: fullName, otp, email: normalizedEmail } as {
     name: string;
     otp: string;
     email: string;
@@ -142,11 +184,14 @@ const signupUserToDB = async (payload: {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 5 * 60000),
   };
-  await User.findOneAndUpdate({ email }, { $set: { authentication } });
+  await User.findOneAndUpdate(
+    { email: normalizedEmail },
+    { $set: { authentication } }
+  );
 
   // Create signup token for resend OTP
   const signupToken = jwtHelper.createToken(
-    { email },
+    { email: normalizedEmail },
     config.jwt.jwt_secret as Secret,
     '10m' // 10 minutes validity
   );
@@ -162,7 +207,7 @@ const forgetPasswordToDB = async (email: string) => {
   }
 
   //send mail
-  const otp = generateOTP(4);
+  const otp = generateOTP(6);
   const value = { otp, email: isExistUser.email };
   const forgetPassword = emailTemplate.resetPassword(value);
   emailHelper.sendEmail(forgetPassword);
@@ -212,7 +257,7 @@ const resendOtpFromDb = async (
   }
 
   // send email
-  const otp = generateOTP(4);
+  const otp = generateOTP(6);
   const values = {
     name: isExistUser.name,
     otp: otp,
