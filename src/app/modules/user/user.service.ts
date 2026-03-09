@@ -120,6 +120,26 @@ const updateProfileToDB = async (
     unlinkFile(isExistUser.coverPhoto);
   }
 
+  const hasFirstNameUpdate = Object.prototype.hasOwnProperty.call(
+    payload,
+    'firstName'
+  );
+  const hasLastNameUpdate = Object.prototype.hasOwnProperty.call(
+    payload,
+    'lastName'
+  );
+
+  // Keep full name in sync when firstName/lastName changes and name is not sent explicitly.
+  if ((hasFirstNameUpdate || hasLastNameUpdate) && !('name' in payload)) {
+    const firstName = (payload.firstName ?? isExistUser.firstName ?? '').trim();
+    const lastName = (payload.lastName ?? isExistUser.lastName ?? '').trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    if (fullName) {
+      payload.name = fullName;
+    }
+  }
+
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
     new: true,
   });
