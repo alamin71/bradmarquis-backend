@@ -73,17 +73,21 @@ const updateAdminProfile = catchAsync(async (req: Request, res: Response) => {
     | { [fieldname: string]: Express.Multer.File[] }
     | undefined;
 
-  let imageFile: Express.Multer.File | undefined;
+  let profileImageFile: Express.Multer.File | undefined;
 
   if (Array.isArray(files) && files.length > 0) {
-    imageFile = files.find((file) => file.fieldname === 'image');
-  } else if (files && 'image' in files && Array.isArray(files.image)) {
-    [imageFile] = files.image;
+    profileImageFile = files.find((file) => file.fieldname === 'profileImage');
+  } else if (
+    files &&
+    'profileImage' in files &&
+    Array.isArray(files.profileImage)
+  ) {
+    [profileImageFile] = files.profileImage;
   }
 
-  if (imageFile) {
-    const s3Url = await uploadToS3(imageFile, 'admin/profiles');
-    payload.image = s3Url;
+  if (profileImageFile) {
+    const s3Url = await uploadToS3(profileImageFile, 'admin/profiles');
+    payload.profileImage = s3Url;
   }
 
   const result = await AdminService.updateAdminProfileInDB(admin, payload);

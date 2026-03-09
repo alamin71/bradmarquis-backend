@@ -8,7 +8,11 @@ export type IUser = {
   role: USER_ROLES;
   email: string;
   password: string;
-  image?: string;
+  profileImage?: string;
+  coverPhoto?: string;
+  bio?: string;
+  gender?: string;
+  dateOfBirth?: Date;
   isDeleted: boolean;
   stripeCustomerId: string;
   address: string;

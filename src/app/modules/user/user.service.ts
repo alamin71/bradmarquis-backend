@@ -103,12 +103,21 @@ const updateProfileToDB = async (
 
   //unlink file here
   if (
-    payload.image &&
-    isExistUser.image &&
-    !isExistUser.image.startsWith('http://') &&
-    !isExistUser.image.startsWith('https://')
+    payload.profileImage &&
+    isExistUser.profileImage &&
+    !isExistUser.profileImage.startsWith('http://') &&
+    !isExistUser.profileImage.startsWith('https://')
   ) {
-    unlinkFile(isExistUser.image);
+    unlinkFile(isExistUser.profileImage);
+  }
+
+  if (
+    payload.coverPhoto &&
+    isExistUser.coverPhoto &&
+    !isExistUser.coverPhoto.startsWith('http://') &&
+    !isExistUser.coverPhoto.startsWith('https://')
+  ) {
+    unlinkFile(isExistUser.coverPhoto);
   }
 
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {

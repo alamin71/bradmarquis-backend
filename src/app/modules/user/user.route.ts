@@ -12,7 +12,10 @@ router
   .get(auth(USER_ROLES.ADMIN, USER_ROLES.USER), UserController.getUserProfile)
   .patch(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
-    s3FileUploadHandler.fields([{ name: 'image', maxCount: 1 }]),
+    s3FileUploadHandler.fields([
+      { name: 'profileImage', maxCount: 1 },
+      { name: 'coverPhoto', maxCount: 1 },
+    ]),
     validateRequest(UserValidation.updateUserZodSchema),
     UserController.updateProfile
   );

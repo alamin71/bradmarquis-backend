@@ -66,7 +66,7 @@ router.get(
 router.patch(
   '/profile/update',
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  adminUpload.fields([{ name: 'image', maxCount: 1 }]),
+  adminUpload.fields([{ name: 'profileImage', maxCount: 1 }]),
   AdminController.updateAdminProfile
 );
 

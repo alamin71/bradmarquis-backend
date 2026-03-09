@@ -99,7 +99,7 @@ const adminLoginToDB = async (payload: IAdminLoginData) => {
 
   const tokens = await AuthService.loginUserFromDB(payload);
   const admin = await User.findOne({ email: payload.email }).select(
-    'name userName email role image verified isEmailVerified authProvider status'
+    'name userName email role profileImage verified isEmailVerified authProvider status'
   );
 
   return {

@@ -1,5 +1,11 @@
 import { string, z } from 'zod';
 
+const booleanLike = z.preprocess((val) => {
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  return val;
+}, z.boolean());
+
 export const createUserZodSchema = z.object({
   body: z.object({
     name: z
@@ -21,12 +27,21 @@ export const createUserZodSchema = z.object({
 
 const updateUserZodSchema = z.object({
   body: z.object({
+    email: z.string().email('Invalid email address').optional(),
+    userName: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    profileImage: z.string().optional(),
+    coverPhoto: z.string().optional(),
+    bio: z.string().optional(),
+    gender: z.string().optional(),
+    dateOfBirth: z.coerce.date().optional(),
+    removeCoverPhoto: booleanLike.optional(),
+    removeProfileImage: booleanLike.optional(),
     name: z.string().optional(),
     contact: z.string().optional(),
     address: z.string().optional(),
-    email: z.string().email('Invalid email address').optional(),
     password: z.string().optional(),
-    image: z.string().optional(),
   }),
 });
 

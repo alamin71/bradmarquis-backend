@@ -46,9 +46,27 @@ const userSchema = new Schema<IUser, UserModel>(
       select: false,
       minlength: 8,
     },
-    image: {
+    profileImage: {
       type: String,
       default: '',
+    },
+    coverPhoto: {
+      type: String,
+      default: '',
+    },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    gender: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    dateOfBirth: {
+      type: Date,
+      default: null,
     },
     status: {
       type: String,
