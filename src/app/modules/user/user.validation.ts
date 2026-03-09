@@ -54,7 +54,6 @@ export const createUserZodSchema = z.object({
 
 const updateUserZodSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address').optional(),
     userName: z.string().optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
@@ -72,7 +71,30 @@ const updateUserZodSchema = z.object({
   }),
 });
 
+const requestEmailChangeZodSchema = z.object({
+  body: z.object({
+    currentPassword: z
+      .string()
+      .min(1, { message: 'Current password is required' }),
+    newEmail: z
+      .string()
+      .email('Invalid email address')
+      .min(1, { message: 'New email is required' }),
+  }),
+});
+
+const verifyEmailChangeZodSchema = z.object({
+  body: z.object({
+    otp: z.preprocess(
+      (val) => Number(Array.isArray(val) ? val[0] : val),
+      z.number().int().nonnegative({ message: 'OTP is required' })
+    ),
+  }),
+});
+
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
+  requestEmailChangeZodSchema,
+  verifyEmailChangeZodSchema,
 };

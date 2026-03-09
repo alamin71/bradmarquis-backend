@@ -8,6 +8,15 @@ import { IUser } from './user.interface';
 import { User } from './user.model';
 import AppError from '../../../errors/AppError';
 import generateOTP from '../../../utils/generateOTP';
+
+type IRequestEmailChangePayload = {
+  currentPassword: string;
+  newEmail: string;
+};
+
+type IVerifyEmailChangePayload = {
+  otp: number;
+};
 // create user
 const createUserToDB = async (payload: IUser): Promise<IUser> => {
   //set role
@@ -167,10 +176,175 @@ const deleteUser = async (id: string) => {
 
   return true;
 };
+
+const requestEmailChangeToDB = async (
+  user: JwtPayload,
+  payload: IRequestEmailChangePayload
+) => {
+  const { id } = user;
+  const { currentPassword, newEmail } = payload;
+
+  if (!currentPassword) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Current password is required');
+  }
+
+  const normalizedNewEmail = newEmail.trim().toLowerCase();
+  const existingUser = await User.findById(id).select(
+    '+password +authentication'
+  );
+
+  if (!existingUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  const isPasswordValid = await User.isMatchPassword(
+    currentPassword,
+    existingUser.password
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'Current password is incorrect'
+    );
+  }
+
+  if (existingUser.email === normalizedNewEmail) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'New email must be different from current email'
+    );
+  }
+
+  const emailAlreadyTaken = await User.findOne({ email: normalizedNewEmail });
+  if (emailAlreadyTaken && String(emailAlreadyTaken._id) !== String(id)) {
+    throw new AppError(StatusCodes.CONFLICT, 'Email already exists');
+  }
+
+  const otp = generateOTP(6);
+  const values = { otp, email: normalizedNewEmail };
+  const template = emailTemplate.resetPassword(values);
+  emailHelper.sendEmail(template);
+
+  await User.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        'authentication.pendingEmail': normalizedNewEmail,
+        'authentication.emailChangeOtp': Number(otp),
+        'authentication.emailChangeExpireAt': new Date(Date.now() + 5 * 60000),
+      },
+    },
+    { new: true }
+  );
+
+  return {
+    pendingEmail: normalizedNewEmail,
+    otp,
+  };
+};
+
+const verifyEmailChangeToDB = async (
+  user: JwtPayload,
+  payload: IVerifyEmailChangePayload
+) => {
+  const { id } = user;
+  const { otp } = payload;
+
+  const existingUser = await User.findById(id).select('+authentication');
+  if (!existingUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  const pendingEmail = existingUser.authentication?.pendingEmail?.trim();
+  const emailChangeOtp = existingUser.authentication?.emailChangeOtp;
+  const emailChangeExpireAt = existingUser.authentication?.emailChangeExpireAt;
+
+  if (!pendingEmail || !emailChangeOtp || !emailChangeExpireAt) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'No pending email change request found'
+    );
+  }
+
+  if (String(emailChangeOtp) !== String(otp)) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
+  }
+
+  if (new Date() > new Date(emailChangeExpireAt)) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Otp already expired, Please try again'
+    );
+  }
+
+  const emailAlreadyTaken = await User.findOne({ email: pendingEmail });
+  if (emailAlreadyTaken && String(emailAlreadyTaken._id) !== String(id)) {
+    throw new AppError(StatusCodes.CONFLICT, 'Email already exists');
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        email: pendingEmail,
+        'authentication.pendingEmail': '',
+        'authentication.emailChangeOtp': null,
+        'authentication.emailChangeExpireAt': null,
+      },
+    },
+    { new: true }
+  );
+
+  return updatedUser;
+};
+
+const resendEmailChangeOtpToDB = async (user: JwtPayload) => {
+  const { id } = user;
+
+  const existingUser = await User.findById(id).select('+authentication');
+  if (!existingUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  const pendingEmail = existingUser.authentication?.pendingEmail?.trim();
+
+  if (!pendingEmail) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'No pending email change request found'
+    );
+  }
+
+  const otp = generateOTP(6);
+  const values = { otp, email: pendingEmail };
+  const template = emailTemplate.resetPassword(values);
+  emailHelper.sendEmail(template);
+
+  await User.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        'authentication.emailChangeOtp': Number(otp),
+        'authentication.emailChangeExpireAt': new Date(Date.now() + 5 * 60000),
+      },
+    },
+    { new: true }
+  );
+
+  return {
+    pendingEmail,
+    otp,
+  };
+};
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
   updateProfileToDB,
   deleteUser,
   verifyUserPassword,
+  requestEmailChangeToDB,
+  verifyEmailChangeToDB,
+  resendEmailChangeOtpToDB,
 };

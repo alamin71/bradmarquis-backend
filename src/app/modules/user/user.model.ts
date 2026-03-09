@@ -99,6 +99,20 @@ const userSchema = new Schema<IUser, UserModel>(
           type: Date,
           default: null,
         },
+        pendingEmail: {
+          type: String,
+          default: '',
+          lowercase: true,
+          trim: true,
+        },
+        emailChangeOtp: {
+          type: Number,
+          default: null,
+        },
+        emailChangeExpireAt: {
+          type: Date,
+          default: null,
+        },
       },
       select: false,
     },

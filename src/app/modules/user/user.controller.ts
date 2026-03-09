@@ -98,6 +98,10 @@ const updateProfile = catchAsync(async (req, res) => {
     delete payload.role;
   }
 
+  if ('email' in payload) {
+    delete payload.email;
+  }
+
   // If password is provided
   if (payload.password) {
     payload.password = await bcrypt.hash(
@@ -138,9 +142,61 @@ const deleteProfile = catchAsync(async (req, res) => {
   });
 });
 
+const requestEmailChange = catchAsync(async (req, res) => {
+  const user = req.user;
+  const payload = req.body;
+
+  const result = await UserService.requestEmailChangeToDB(user, payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: result?.otp
+      ? `Email change OTP sent. [DEV: ${result.otp}]`
+      : 'Email change OTP sent successfully',
+    data: {
+      pendingEmail: result.pendingEmail,
+    },
+  });
+});
+
+const verifyEmailChange = catchAsync(async (req, res) => {
+  const user = req.user;
+  const payload = req.body;
+
+  const result = await UserService.verifyEmailChangeToDB(user, payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Email updated successfully',
+    data: result,
+  });
+});
+
+const resendEmailChangeOtp = catchAsync(async (req, res) => {
+  const user = req.user;
+
+  const result = await UserService.resendEmailChangeOtpToDB(user);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: result?.otp
+      ? `Email change OTP resent. [DEV: ${result.otp}]`
+      : 'Email change OTP resent successfully',
+    data: {
+      pendingEmail: result.pendingEmail,
+    },
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
   updateProfile,
   deleteProfile,
+  requestEmailChange,
+  verifyEmailChange,
+  resendEmailChangeOtp,
 };

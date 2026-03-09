@@ -27,6 +27,26 @@ router
     UserController.createUser
   );
 
+router.post(
+  '/profile/change-email/request',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  validateRequest(UserValidation.requestEmailChangeZodSchema),
+  UserController.requestEmailChange
+);
+
+router.post(
+  '/profile/change-email/verify',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  validateRequest(UserValidation.verifyEmailChangeZodSchema),
+  UserController.verifyEmailChange
+);
+
+router.post(
+  '/profile/change-email/resend-otp',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  UserController.resendEmailChangeOtp
+);
+
 router.delete('/delete', auth(USER_ROLES.USER), UserController.deleteProfile);
 
 export const UserRouter = router;
