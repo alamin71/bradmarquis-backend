@@ -1,10 +1,37 @@
 import { string, z } from 'zod';
 
-const booleanLike = z.preprocess((val) => {
-  if (val === 'true') return true;
-  if (val === 'false') return false;
-  return val;
-}, z.boolean());
+const optionalBooleanLike = z.preprocess((val) => {
+  if (val === undefined || val === null || val === '') return undefined;
+
+  const normalized = Array.isArray(val) ? val[0] : val;
+
+  if (typeof normalized === 'string') {
+    const asBoolean = normalized.trim().toLowerCase();
+    if (asBoolean === 'true') return true;
+    if (asBoolean === 'false') return false;
+  }
+
+  return normalized;
+}, z.boolean().optional());
+
+const optionalDateLike = z.preprocess((val) => {
+  if (val === undefined || val === null || val === '') return undefined;
+
+  const normalized = Array.isArray(val) ? val[0] : val;
+
+  if (normalized instanceof Date) {
+    return normalized;
+  }
+
+  if (typeof normalized === 'string' || typeof normalized === 'number') {
+    const parsedDate = new Date(normalized);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+  }
+
+  return normalized;
+}, z.date().optional());
 
 export const createUserZodSchema = z.object({
   body: z.object({
@@ -35,9 +62,9 @@ const updateUserZodSchema = z.object({
     coverPhoto: z.string().optional(),
     bio: z.string().optional(),
     gender: z.string().optional(),
-    dateOfBirth: z.coerce.date().optional(),
-    removeCoverPhoto: booleanLike.optional(),
-    removeProfileImage: booleanLike.optional(),
+    dateOfBirth: optionalDateLike,
+    removeCoverPhoto: optionalBooleanLike,
+    removeProfileImage: optionalBooleanLike,
     name: z.string().optional(),
     contact: z.string().optional(),
     address: z.string().optional(),
