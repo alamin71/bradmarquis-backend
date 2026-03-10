@@ -18,6 +18,7 @@ import generateOTP from '../../../utils/generateOTP';
 import cryptoToken from '../../../utils/cryptoToken';
 import { verifyToken } from '../../../utils/verifyToken';
 import { createToken } from '../../../utils/createToken';
+import { USER_STATUS } from '../../../enums/user';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -25,7 +26,10 @@ const loginUserFromDB = async (payload: ILoginData) => {
   const identifier = (emailOrUsername || email || userName || '').trim();
 
   if (!identifier) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Email or username is required');
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Email or username is required'
+    );
   }
 
   if (!password) {
@@ -77,6 +81,14 @@ const loginUserFromDB = async (payload: ILoginData) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
   }
 
+  // Auto-reactivate temporary deactivated accounts after successful credentials.
+  if (isExistUser.status === USER_STATUS.DEACTIVATED) {
+    await User.findByIdAndUpdate(isExistUser._id, {
+      $set: { status: USER_STATUS.ACTIVE },
+    });
+    isExistUser.status = USER_STATUS.ACTIVE;
+  }
+
   const jwtData = {
     id: isExistUser._id,
     role: isExistUser.role,
@@ -111,7 +123,9 @@ const signupUserToDB = async (payload: {
   const normalizedUserName = userName.trim().toLowerCase();
   const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
-  const existingByUserName = await User.findOne({ userName: normalizedUserName });
+  const existingByUserName = await User.findOne({
+    userName: normalizedUserName,
+  });
   if (existingByUserName && existingByUserName.email !== normalizedEmail) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Username already exists.');
   }

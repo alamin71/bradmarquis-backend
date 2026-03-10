@@ -191,6 +191,21 @@ const resendEmailChangeOtp = catchAsync(async (req, res) => {
   });
 });
 
+const deactivateAccount = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const { password } = req.body;
+
+  const result = await UserService.deactivateUserToDB(id, password);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message:
+      'Account deactivated successfully. Login again with email/username and password to reactivate.',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -199,4 +214,5 @@ export const UserController = {
   requestEmailChange,
   verifyEmailChange,
   resendEmailChangeOtp,
+  deactivateAccount,
 };

@@ -47,6 +47,13 @@ router.post(
   UserController.resendEmailChangeOtp
 );
 
+router.patch(
+  '/deactivate',
+  auth(USER_ROLES.USER),
+  validateRequest(UserValidation.deactivateAccountZodSchema),
+  UserController.deactivateAccount
+);
+
 router.delete('/delete', auth(USER_ROLES.USER), UserController.deleteProfile);
 
 export const UserRouter = router;

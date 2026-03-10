@@ -92,9 +92,16 @@ const verifyEmailChangeZodSchema = z.object({
   }),
 });
 
+const deactivateAccountZodSchema = z.object({
+  body: z.object({
+    password: z.string().min(1, { message: 'Password is required' }),
+  }),
+});
+
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
   requestEmailChangeZodSchema,
   verifyEmailChangeZodSchema,
+  deactivateAccountZodSchema,
 };

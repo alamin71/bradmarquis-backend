@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
-import { USER_ROLES } from '../../../enums/user';
+import { USER_ROLES, USER_STATUS } from '../../../enums/user';
 import { emailHelper } from '../../../helpers/emailHelper';
 import { emailTemplate } from '../../../shared/emailTemplate';
 import unlinkFile from '../../../shared/unlinkFile';
@@ -177,6 +177,44 @@ const deleteUser = async (id: string) => {
   return true;
 };
 
+const deactivateUserToDB = async (id: string, password: string) => {
+  if (!password) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required');
+  }
+
+  const existingUser = await User.findById(id).select('+password');
+  if (!existingUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  const isPasswordValid = await User.isMatchPassword(
+    password,
+    existingUser.password
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'Incorrect password. Please try again.'
+    );
+  }
+
+  if (existingUser.status === USER_STATUS.BLOCKED) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Blocked account cannot be deactivated.'
+    );
+  }
+
+  await User.findByIdAndUpdate(id, {
+    $set: {
+      status: USER_STATUS.DEACTIVATED,
+    },
+  });
+
+  return true;
+};
+
 const requestEmailChangeToDB = async (
   user: JwtPayload,
   payload: IRequestEmailChangePayload
@@ -344,6 +382,7 @@ export const UserService = {
   updateProfileToDB,
   deleteUser,
   verifyUserPassword,
+  deactivateUserToDB,
   requestEmailChangeToDB,
   verifyEmailChangeToDB,
   resendEmailChangeOtpToDB,
