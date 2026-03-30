@@ -1,12 +1,12 @@
-import nodemailer from "nodemailer";
-import config from "../config";
-import { errorLogger, logger } from "../shared/logger";
-import { ISendEmail } from "../types/email";
+import nodemailer from 'nodemailer';
+import config from '../config';
+import { errorLogger, logger } from '../shared/logger';
+import { ISendEmail } from '../types/email';
 
 const transporter = nodemailer.createTransport({
   host: config.email.host,
   port: Number(config.email.port),
-  secure: false,
+  secure: true,
   auth: {
     user: config.email.user,
     pass: config.email.pass,
@@ -22,9 +22,9 @@ const sendEmail = async (values: ISendEmail) => {
       html: values.html,
     });
 
-    logger.info("Mail send successfully", info.accepted);
+    logger.info('Mail send successfully', info.accepted);
   } catch (error) {
-    errorLogger.error("Email", error);
+    errorLogger.error('Email', error);
   }
 };
 const sendEmailForAdmin = async (values: ISendEmail) => {
@@ -36,9 +36,9 @@ const sendEmailForAdmin = async (values: ISendEmail) => {
       html: values.html,
     });
 
-    logger.info("Mail send successfully", info.accepted);
+    logger.info('Mail send successfully', info.accepted);
   } catch (error) {
-    errorLogger.error("Email", error);
+    errorLogger.error('Email', error);
   }
 };
 
